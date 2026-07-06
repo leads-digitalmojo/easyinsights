@@ -1,0 +1,90 @@
+/* DIGICHECK Design System — CSS Custom Properties */
+
+:root {
+  /* Backgrounds */
+  --bg-app: #0D0F14;
+  --bg-surface: #13161D;
+  --bg-elevated: #1A1E28;
+  --bg-overlay: #1F2330;
+  --bg-hover: rgba(255, 255, 255, 0.04);
+  --bg-active: rgba(255, 255, 255, 0.07);
+
+  /* Borders */
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-default: rgba(255, 255, 255, 0.10);
+  --border-strong: rgba(255, 255, 255, 0.18);
+  --border-focus: #5B6BF8;
+
+  /* Text */
+  --text-primary: #F0F2F7;
+  --text-secondary: #8B91A7;
+  --text-tertiary: #555C72;
+  --text-disabled: #3A3F52;
+  --text-link: #7B8CFF;
+  --text-on-accent: #FFFFFF;
+
+  /* Brand / Accent */
+  --accent-primary: #5B6BF8;
+  --accent-primary-hover: #6C7BFF;
+  --accent-primary-muted: rgba(91, 107, 248, 0.15);
+
+  /* Semantic */
+  --color-success: #2DC48D;
+  --color-success-muted: rgba(45, 196, 141, 0.12);
+  --color-warning: #F5A623;
+  --color-warning-muted: rgba(245, 166, 35, 0.12);
+  --color-danger: #F25C5C;
+  --color-danger-muted: rgba(242, 92, 92, 0.12);
+  --color-info: #5B9CF8;
+  --color-info-muted: rgba(91, 156, 248, 0.12);
+  --color-neutral: #6B7280;
+  --color-neutral-muted: rgba(107, 114, 128, 0.12);
+
+  /* Source/CRM badges */
+  --badge-meta: #1877F2;
+  --badge-meta-muted: rgba(24, 119, 242, 0.12);
+  --badge-google: #34A853;
+  --badge-google-muted: rgba(52, 168, 83, 0.12);
+  --badge-whatsapp: #25D366;
+  --badge-whatsapp-muted: rgba(37, 211, 102, 0.12);
+  --badge-zoho: #E44C41;
+  --badge-zoho-muted: rgba(228, 76, 65, 0.12);
+
+  /* Typography */
+  --font-sans: 'Inter', 'Geist', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  /* Spacing scale */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  /* Border radius */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-pill: 999px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.6);
+  --shadow-panel: -8px 0 32px rgba(0, 0, 0, 0.5);
+
+  /* Transitions */
+  --transition-fast: 120ms ease;
+  --transition-base: 180ms ease;
+  --transition-slow: 280ms ease;
+
+  /* Z-index ladder */
+  --z-sidebar: 100;
+  --z-panel: 200;
+  --z-overlay: 300;
+  --z-modal: 400;
+  --z-toast: 500;
+}

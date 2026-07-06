@@ -1,0 +1,41 @@
+rules_version = '2';
+
+// Security model:
+// - All WRITES happen server-side via the Firebase Admin SDK (API routes),
+//   which bypasses these rules. Client-side writes are therefore denied.
+// - Client-side READS (dashboard listeners) are allowed only for users who
+//   are members of the workspace.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isMemberOf(workspaceId) {
+      return signedIn()
+        && request.auth.uid in
+           get(/databases/$(database)/documents/workspaces/$(workspaceId)).data.members;
+    }
+
+    match /workspaces/{workspaceId} {
+      // A user may read/list a workspace only if they are in its members array.
+      // This also scopes the `where('members','array-contains',uid)` query.
+      allow read: if signedIn() && request.auth.uid in resource.data.members;
+
+      // Writes are server-only.
+      allow write: if false;
+
+      // Subcollections (leads, conversions, audiences, webhook_payloads, etc.)
+      match /{document=**} {
+        allow read: if isMemberOf(workspaceId);
+        allow write: if false;
+      }
+    }
+
+    // Deny everything else by default.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

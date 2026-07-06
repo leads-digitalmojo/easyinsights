@@ -54,8 +54,8 @@ export default function SettingsPage() {
   };
   const [workspace, setWorkspace] = useState<Workspace | null>(null);
 
-  // Active Tab State: 'workspace' | 'meta' | 'google' | 'webhooks'
-  const [activeTab, setActiveTab] = useState<'workspace' | 'meta' | 'google' | 'webhooks' | 'members'>('workspace');
+  // Active Tab State
+  const [activeTab, setActiveTab] = useState<'workspace' | 'meta' | 'google' | 'webhooks' | 'members' | 'selldo'>('workspace');
 
   // Workspace Form fields
   const [wsName, setWsName] = useState('');
@@ -78,6 +78,14 @@ export default function SettingsPage() {
   // Webhook states
   const [newSecretOnce, setNewSecretOnce] = useState<string | null>(null);
   const [showSecretRegenModal, setShowSecretRegenModal] = useState(false);
+
+  // Sell.do Sync fields
+  const [selldoApiKey, setSelldoApiKey] = useState('');
+  const [showSelldoKey, setShowSelldoKey] = useState(false);
+  const [selldoSaving, setSelldoSaving] = useState(false);
+  const [selldoSyncing, setSelldoSyncing] = useState(false);
+  const [selldoLastSynced, setSelldoLastSynced] = useState<string | null>(null);
+  const [selldoSyncResult, setSelldoSyncResult] = useState<{ fetched?: number; processed?: number; error?: string } | null>(null);
 
   // Custom stage mappings
   const [customMappings, setCustomMappings] = useState<{ crm_value: string; internal_status: string }[]>([]);
@@ -111,6 +119,11 @@ export default function SettingsPage() {
           setMetaPixelId(data.meta_pixel_id || '');
           setMetaAdAccountId(data.meta_ad_account_id || '');
           setGoogleCustomerId(data.google_ads_customer_id || '');
+          setSelldoApiKey(data.selldo_api_key || '');
+          if (data.selldo_last_synced_at) {
+            const ts = data.selldo_last_synced_at;
+            setSelldoLastSynced(new Date(ts.seconds ? ts.seconds * 1000 : ts).toLocaleString());
+          }
           const map = data.custom_stage_map || {};
           setCustomMappings(Object.entries(map).map(([crm_value, internal_status]) => ({ crm_value, internal_status: internal_status as string })));
         } else {
@@ -529,6 +542,18 @@ export default function SettingsPage() {
           >
             <span>Webhooks Registry</span>
             <LinkIcon className="w-3.5 h-3.5 shrink-0" />
+          </button>
+
+          <button
+            onClick={() => setActiveTab('selldo')}
+            className={`w-full text-left px-4 py-3 rounded-xl text-xs font-bold transition-all duration-150 flex items-center justify-between ${
+              activeTab === 'selldo'
+                ? 'bg-blue-600 text-white shadow-md'
+                : 'bg-white text-black hover:bg-slate-100'
+            }`}
+          >
+            <span>Sell.do Sync</span>
+            <RefreshCw className="w-3.5 h-3.5 shrink-0" />
           </button>
         </div>
 
@@ -1103,6 +1128,134 @@ export default function SettingsPage() {
                     <span className="text-xs text-slate-400 leading-relaxed block font-mono">POST to custom URL with header <code className="bg-slate-800 px-1 rounded">x-webhook-secret</code>. Body: <code className="bg-slate-800 px-1 rounded">{`{"external_id":"...","name":"...","lead_status":"..."}`}</code></span>
                   </div>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB: SELL.DO SYNC */}
+          {activeTab === 'selldo' && (
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-sm font-bold text-slate-100 flex items-center space-x-2">
+                  <RefreshCw className="w-4 h-4 text-indigo-400" />
+                  <span>Sell.do API Sync</span>
+                </h3>
+                <p className="text-xs text-slate-300 mt-0.5">
+                  Automatically pull leads from Sell.do every 10 minutes using your API key. No webhook setup needed.
+                </p>
+              </div>
+
+              {/* API Key Input */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-300 uppercase tracking-wider block">Sell.do API Key</label>
+                <p className="text-xs text-slate-400">Find this in Sell.do → Marketing Automation → Lead Integrations → API Based Integrations. Copy the key next to your integration.</p>
+                <div className="flex items-center space-x-2 mt-2">
+                  <div className="relative flex-1">
+                    <input
+                      type={showSelldoKey ? 'text' : 'password'}
+                      value={selldoApiKey}
+                      onChange={(e) => setSelldoApiKey(e.target.value)}
+                      placeholder="paste your sell.do api key here"
+                      className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-xs text-slate-100 font-mono focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-all"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowSelldoKey(!showSelldoKey)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition-colors"
+                    >
+                      {showSelldoKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={selldoSaving}
+                    onClick={async () => {
+                      if (!activeWorkspace?.slug) return;
+                      setSelldoSaving(true);
+                      try {
+                        const res = await authFetch(`/api/workspaces/${activeWorkspace.slug}/selldo`, {
+                          method: 'PATCH',
+                          body: JSON.stringify({ selldo_api_key: selldoApiKey }),
+                        });
+                        if (res.ok) showToast('success', 'Sell.do API key saved.');
+                        else showToast('error', 'Failed to save API key.');
+                      } finally {
+                        setSelldoSaving(false);
+                      }
+                    }}
+                    className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 shrink-0"
+                  >
+                    <Save className="w-3.5 h-3.5" />
+                    <span>{selldoSaving ? 'Saving...' : 'Save Key'}</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Sync Status */}
+              <div className="bg-slate-800/60 border border-slate-700 rounded-xl p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-xs font-bold text-slate-200 block">Sync Status</span>
+                    <span className="text-xs text-slate-400 mt-0.5 block">
+                      {selldoLastSynced ? `Last synced: ${selldoLastSynced}` : 'Never synced — run a manual sync first.'}
+                    </span>
+                    {selldoSyncResult && (
+                      <span className={`text-xs mt-1 block font-mono ${selldoSyncResult.error ? 'text-red-400' : 'text-emerald-400'}`}>
+                        {selldoSyncResult.error
+                          ? `Error: ${selldoSyncResult.error}`
+                          : `✓ Fetched ${selldoSyncResult.fetched} leads, processed ${selldoSyncResult.processed}`}
+                      </span>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    disabled={selldoSyncing || !selldoApiKey}
+                    onClick={async () => {
+                      if (!activeWorkspace?.slug) return;
+                      setSelldoSyncing(true);
+                      setSelldoSyncResult(null);
+                      try {
+                        const res = await authFetch(`/api/workspaces/${activeWorkspace.slug}/selldo/sync`, { method: 'POST' });
+                        const data = await res.json();
+                        if (res.ok && data.success) {
+                          setSelldoSyncResult({ fetched: data.fetched, processed: data.processed });
+                          setSelldoLastSynced(new Date(data.synced_at).toLocaleString());
+                          showToast('success', `Synced ${data.processed} leads from Sell.do`);
+                        } else {
+                          setSelldoSyncResult({ error: data.error || 'Sync failed' });
+                          showToast('error', data.error || 'Sync failed');
+                        }
+                      } catch (e: any) {
+                        setSelldoSyncResult({ error: e.message });
+                      } finally {
+                        setSelldoSyncing(false);
+                      }
+                    }}
+                    className="flex items-center space-x-1.5 px-4 py-2 bg-emerald-700 hover:bg-emerald-600 disabled:opacity-40 text-white rounded-xl text-xs font-bold transition-all shrink-0"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${selldoSyncing ? 'animate-spin' : ''}`} />
+                    <span>{selldoSyncing ? 'Syncing...' : 'Sync Now'}</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Auto-sync info */}
+              <div className="bg-indigo-950/20 border border-indigo-500/20 rounded-xl p-4">
+                <span className="text-xs font-bold text-indigo-300 block mb-1">Auto-Sync (every 10 min)</span>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  Once your API key is saved, Vercel automatically syncs new and updated leads from Sell.do every 10 minutes in the background. Only leads created or updated since the last sync are fetched — no duplicates.
+                </p>
+              </div>
+
+              {/* Where to find API key */}
+              <div className="border border-slate-800 rounded-xl p-4 space-y-2">
+                <span className="text-xs font-bold text-slate-200 block">Where to find your API key in Sell.do</span>
+                <ol className="text-xs text-slate-400 space-y-1 list-decimal list-inside leading-relaxed">
+                  <li>Go to <span className="text-slate-200 font-mono">Marketing Automation → Lead Integrations</span></li>
+                  <li>Click <span className="text-slate-200 font-mono">API Based Integrations</span></li>
+                  <li>Find your integration in the list (e.g. "Digital mojo")</li>
+                  <li>Copy the long alphanumeric <span className="text-slate-200 font-mono">API KEY</span> from that row</li>
+                </ol>
               </div>
             </div>
           )}

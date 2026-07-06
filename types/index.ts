@@ -14,6 +14,8 @@ export interface Workspace {
   webhook_secret: string;
   custom_stage_map?: Record<string, string>;
   meta_pixel_name?: string;
+  selldo_api_key?: string;
+  selldo_last_synced_at?: any; // Firestore Timestamp
   created_at: any; // Firestore Timestamp
 }
 

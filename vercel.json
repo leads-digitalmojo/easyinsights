@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/selldo-sync",
+      "schedule": "*/10 * * * *"
+    }
+  ]
+}

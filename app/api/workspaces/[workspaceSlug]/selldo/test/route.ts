@@ -19,8 +19,12 @@ export async function GET(
     const attempts = [
       { url: `https://app.sell.do/api/v2/leads?api_key=${apiKey}&page=1&per_page=5`, headers: { Accept: 'application/json' } },
       { url: `https://app.sell.do/api/v1/leads?api_key=${apiKey}&page=1&per_page=5`, headers: { Accept: 'application/json' } },
+      { url: `https://app.sell.do/client/api/v2/leads?api_key=${apiKey}&page=1&per_page=5`, headers: { Accept: 'application/json' } },
+      { url: `https://app.sell.do/api/v2/client/leads?api_key=${apiKey}&page=1&per_page=5`, headers: { Accept: 'application/json' } },
       { url: `https://app.sell.do/api/v2/leads?page=1&per_page=5`, headers: { Accept: 'application/json', 'Authorization': `Token token=${apiKey}` } },
+      { url: `https://app.sell.do/api/v2/leads?page=1&per_page=5`, headers: { Accept: 'application/json', 'Authorization': `Bearer ${apiKey}` } },
       { url: `https://app.sell.do/api/v2/leads?page=1&per_page=5`, headers: { Accept: 'application/json', 'X-Api-Key': apiKey } },
+      { url: `https://app.sell.do/api/v1/client/leads?auth_token=${apiKey}&page=1&per_page=5`, headers: { Accept: 'application/json' } },
     ];
 
     const results: any[] = [];
@@ -40,7 +44,7 @@ export async function GET(
           parsed_keys: json ? Object.keys(json) : null,
           lead_count: json?.leads?.length ?? json?.data?.length ?? (Array.isArray(json) ? json.length : 'unknown'),
         });
-        if (res.ok) break; // stop at first success
+        // continue trying all endpoints
       } catch (e: any) {
         results.push({ url: attempt.url.replace(apiKey, '***KEY***'), error: e.message });
       }

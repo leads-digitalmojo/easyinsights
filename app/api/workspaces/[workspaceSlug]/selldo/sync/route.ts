@@ -93,9 +93,9 @@ export async function POST(
     let updatedAfter: Date | undefined;
     if (workspace.selldo_last_synced_at) {
       const ts = workspace.selldo_last_synced_at;
-      updatedAfter = ts.toDate ? ts.toDate() : new Date(ts);
+      const base: Date = ts.toDate ? ts.toDate() : new Date(ts);
       // Subtract 5 min buffer to avoid missing leads on edge
-      updatedAfter = new Date(updatedAfter.getTime() - 5 * 60 * 1000);
+      updatedAfter = new Date(base.getTime() - 5 * 60 * 1000);
     }
 
     const syncStart = new Date();
@@ -109,7 +109,7 @@ export async function POST(
         const rawStage = lead.stage ?? lead.current_stage ?? lead.status ?? 'fresh';
         const normalizedPayload = {
           external_id: String(lead.id ?? `selldo_${Date.now()}`),
-          name: lead.full_name ?? lead.name ?? `${lead.first_name ?? ''} ${lead.last_name ?? ''}`.trim() || 'Sell.do Lead',
+          name: lead.full_name ?? lead.name ?? (`${lead.first_name ?? ''} ${lead.last_name ?? ''}`.trim() || 'Sell.do Lead'),
           email: lead.email ?? '',
           phone: lead.phone ?? lead.mobile ?? lead.contact_number ?? '',
           lead_status: normalizeStage(rawStage, SELLDO_STAGE_MAP, workspace.custom_stage_map ?? {}),

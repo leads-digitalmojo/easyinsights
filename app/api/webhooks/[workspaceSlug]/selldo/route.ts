@@ -86,16 +86,24 @@ export async function POST(
     const external_id =
       body.lead_id ?? body.id ?? `selldo_${Date.now()}`;
 
-    const firstName = leadData.first_name ?? payloadData.first_name ?? '';
-    const lastName = leadData.last_name ?? payloadData.last_name ?? '';
+    // Sanitize: strip Sell.do template literals and placeholder values
+    const clean = (v: any, ...bad: string[]) => {
+      if (!v || typeof v !== 'string') return '';
+      const t = v.trim();
+      if (bad.includes(t.toLowerCase()) || t.startsWith('$')) return '';
+      return t;
+    };
+
+    const firstName = clean(leadData.first_name ?? payloadData.first_name);
+    const lastName  = clean(leadData.last_name  ?? payloadData.last_name, 'last_name');
     const name = `${firstName} ${lastName}`.trim() || 'Sell.do Lead';
 
-    const email =
-      leadData.email ?? payloadData.primary_email ?? '';
+    const email = clean(leadData.email ?? payloadData.primary_email, 'test_email', 'email');
 
-    const phone =
-      leadData.phone ?? leadData.mobile ??
-      payloadData.primary_phone ?? payloadData.primary_mobile ?? '';
+    const phone = clean(
+      leadData.phone ?? leadData.mobile ?? payloadData.primary_phone ?? payloadData.primary_mobile,
+      'n/a', 'na', 'nil', 'none'
+    );
 
     const rawStage =
       payloadData.stage_name ?? leadData.stage ?? body.stage ?? 'fresh';

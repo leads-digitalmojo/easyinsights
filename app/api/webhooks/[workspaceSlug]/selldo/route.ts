@@ -78,40 +78,27 @@ export async function POST(
       return NextResponse.json({ success: false, error: 'Unauthorized secret' }, { status: 200, headers: CORS_HEADERS });
     }
 
-    // Sell.do sends either:
-    // 1. Nested: { event: "lead.created"|"lead.stage_changed", data: { id, name, email, phone/mobile, stage } }
-    // 2. Flat:   { id, name, email, phone, stage, ... }
-    let leadObj: any;
-    let rawStage: any;
-
-    if (body.data && (body.event || body.event_type)) {
-      leadObj = body.data;
-      rawStage = leadObj.new_stage ?? leadObj.stage ?? leadObj.current_stage ?? 'fresh';
-    } else {
-      leadObj = body;
-      rawStage = leadObj.stage ?? leadObj.status ?? leadObj.current_stage ?? 'fresh';
-    }
+    // Sell.do payload structure:
+    // { lead_id, event, lead: { first_name, last_name, phone, email }, payload: { first_name, last_name, primary_phone, primary_email, stage_name } }
+    const leadData = body.lead ?? {};
+    const payloadData = body.payload ?? {};
 
     const external_id =
-      leadObj.id ?? leadObj.lead_id ?? leadObj.selldo_id ?? `selldo_${Date.now()}`;
-    const name =
-      leadObj.lead_name ??
-      leadObj.full_name ??
-      leadObj.name ??
-      leadObj.contact_name ??
-      (`${leadObj.first_name ?? ''} ${leadObj.last_name ?? ''}`.trim() || 'Sell.do Lead');
+      body.lead_id ?? body.id ?? `selldo_${Date.now()}`;
+
+    const firstName = leadData.first_name ?? payloadData.first_name ?? '';
+    const lastName = leadData.last_name ?? payloadData.last_name ?? '';
+    const name = `${firstName} ${lastName}`.trim() || 'Sell.do Lead';
+
     const email =
-      leadObj.lead_email ??
-      leadObj.email ??
-      leadObj.email_address ?? '';
+      leadData.email ?? payloadData.primary_email ?? '';
+
     const phone =
-      leadObj.lead_phone ??
-      leadObj.lead_mobile ??
-      leadObj.phone ??
-      leadObj.mobile ??
-      leadObj.phone_number ??
-      leadObj.mobile_number ??
-      leadObj.contact_number ?? '';
+      leadData.phone ?? leadData.mobile ??
+      payloadData.primary_phone ?? payloadData.primary_mobile ?? '';
+
+    const rawStage =
+      payloadData.stage_name ?? leadData.stage ?? body.stage ?? 'fresh';
 
     const normalizedPayload = {
       external_id: String(external_id),

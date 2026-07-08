@@ -58,7 +58,7 @@ export async function POST(
     } catch (e) {
       console.error('[Webhook Sell.do] Failed to parse body JSON:', e);
     }
-    console.log('[Webhook Sell.do] Raw payload:', rawText);
+    console.error('[Webhook Sell.do] RAW PAYLOAD DEBUG:', rawText.slice(0, 2000));
 
     const bodySecret = body.webhook_secret;
     const providedSecret = querySecret || headerSecret || bodySecret;

@@ -413,9 +413,8 @@ export default function SettingsPage() {
           mappingsRecord[row.crm_value.trim()] = row.internal_status.trim();
         }
       }
-      const res = await fetch(`/api/workspaces/${activeWorkspace.slug}/stage-mappings`, {
+      const res = await authFetch(`/api/workspaces/${activeWorkspace.slug}/stage-mappings`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ mappings: mappingsRecord }),
       });
       const data = await res.json();

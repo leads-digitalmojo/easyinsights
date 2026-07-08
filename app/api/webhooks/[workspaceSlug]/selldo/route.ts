@@ -51,11 +51,14 @@ export async function POST(
     const headerSecret = request.headers.get('x-webhook-secret') || request.headers.get('webhook-secret');
 
     let body: any = {};
+    let rawText = '';
     try {
-      body = await request.json();
+      rawText = await request.text();
+      body = JSON.parse(rawText);
     } catch (e) {
       console.error('[Webhook Sell.do] Failed to parse body JSON:', e);
     }
+    console.log('[Webhook Sell.do] Raw payload:', rawText);
 
     const bodySecret = body.webhook_secret;
     const providedSecret = querySecret || headerSecret || bodySecret;
@@ -82,12 +85,23 @@ export async function POST(
     const external_id =
       leadObj.id ?? leadObj.lead_id ?? leadObj.selldo_id ?? `selldo_${Date.now()}`;
     const name =
+      leadObj.lead_name ??
       leadObj.full_name ??
       leadObj.name ??
+      leadObj.contact_name ??
       (`${leadObj.first_name ?? ''} ${leadObj.last_name ?? ''}`.trim() || 'Sell.do Lead');
-    const email = leadObj.email ?? '';
+    const email =
+      leadObj.lead_email ??
+      leadObj.email ??
+      leadObj.email_address ?? '';
     const phone =
-      leadObj.phone ?? leadObj.mobile ?? leadObj.phone_number ?? leadObj.contact_number ?? '';
+      leadObj.lead_phone ??
+      leadObj.lead_mobile ??
+      leadObj.phone ??
+      leadObj.mobile ??
+      leadObj.phone_number ??
+      leadObj.mobile_number ??
+      leadObj.contact_number ?? '';
 
     const normalizedPayload = {
       external_id: String(external_id),

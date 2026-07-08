@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { processWebhookLead } from '@/lib/webhookProcessor';
 import { getWorkspaceBySlug } from '@/lib/getWorkspace';
 import { normalizeStage } from '@/lib/stageNormalize';
+import { adminDb } from '@/lib/firebaseAdmin';
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -58,6 +59,15 @@ export async function POST(
     } catch (e) {
       console.error('[Webhook Sell.do] Failed to parse body JSON:', e);
     }
+    // Store raw payload in Firestore for inspection — remove once field names are confirmed
+    try {
+      await adminDb.collection('_debug_selldo').add({
+        workspace: params.workspaceSlug,
+        raw: rawText.slice(0, 5000),
+        parsed: body,
+        received_at: new Date(),
+      });
+    } catch {}
     console.error('[Webhook Sell.do] RAW PAYLOAD DEBUG:', rawText.slice(0, 2000));
 
     const bodySecret = body.webhook_secret;

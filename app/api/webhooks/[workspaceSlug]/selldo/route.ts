@@ -115,10 +115,10 @@ export async function POST(
       phone,
       lead_status: normalizeSelldoStage(rawStage, workspace.custom_stage_map),
       source_crm: 'selldo',
-      page_url: leadObj.page_url ?? leadObj.landing_page ?? '',
-      _gcl_aw: leadObj.gclid ?? leadObj._gcl_aw ?? '',
-      _fbc: leadObj.fbclid ?? leadObj._fbc ?? '',
-      _fbp: leadObj._fbp ?? '',
+      page_url: payloadData.page_url ?? leadData.page_url ?? body.page_url ?? '',
+      _gcl_aw: payloadData.gclid ?? body.gclid ?? payloadData._gcl_aw ?? '',
+      _fbc: payloadData.fbclid ?? body.fbclid ?? payloadData._fbc ?? '',
+      _fbp: payloadData._fbp ?? body._fbp ?? '',
     };
 
     console.log(`[Webhook Sell.do] Normalized → external_id:${normalizedPayload.external_id} status:${normalizedPayload.lead_status}`);

@@ -58,7 +58,7 @@ export async function processWebhookLead(workspace: any, payload: any) {
     const oldStatus = lead.lead_status;
 
     if (oldStatus !== lead_status) {
-      const eventName = getEIEventName(lead_status);
+      const eventName = getEIEventName(lead_status, workspace.custom_event_map);
       if (eventName) {
         // Fire events first so the history entry records the real outcome.
         const updatedLead = {
@@ -68,8 +68,6 @@ export async function processWebhookLead(workspace: any, payload: any) {
           phone: phone || lead.phone,
           email_sha256: emailSha || lead.email_sha256,
           phone_sha256: phoneSha || lead.phone_sha256,
-          meta_event_fired: eventName,
-          google_event_fired: eventName,
         };
         const [metaResult, googleResult] = await Promise.all([
           sendMetaEvent(workspace, updatedLead, eventName),
@@ -95,8 +93,8 @@ export async function processWebhookLead(workspace: any, payload: any) {
           phone: phone || lead.phone,
           email_sha256: emailSha || lead.email_sha256,
           phone_sha256: phoneSha || lead.phone_sha256,
-          meta_event_fired: eventName,
-          google_event_fired: eventName,
+          meta_event_fired: metaResult.success ? eventName : (lead.meta_event_fired || ''),
+          google_event_fired: googleResult.success ? eventName : (lead.google_event_fired || ''),
           last_fired_at: new Date(),
           updated_at: new Date(),
         };
@@ -140,7 +138,7 @@ export async function processWebhookLead(workspace: any, payload: any) {
   } else {
     // New Lead Ingestion
     const leadId = leadsColl.doc().id;
-    const eventName = getEIEventName(lead_status) || 'Lead';
+    const eventName = getEIEventName(lead_status, workspace.custom_event_map) || 'Lead';
 
     const newLead = {
       id: leadId,
@@ -177,8 +175,8 @@ export async function processWebhookLead(workspace: any, payload: any) {
 
     // Record the real per-platform outcome in the lead's history
     await leadsColl.doc(leadId).update({
-      meta_event_fired: eventName,
-      google_event_fired: eventName,
+      meta_event_fired: metaResult.success ? eventName : '',
+      google_event_fired: googleResult.success ? eventName : '',
       last_fired_at: new Date(),
       status_history: [
         {

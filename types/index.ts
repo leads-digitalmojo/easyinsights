@@ -13,6 +13,7 @@ export interface Workspace {
   google_ads_account_name?: string;
   webhook_secret: string;
   custom_stage_map?: Record<string, string>;
+  custom_event_map?: Record<string, string>;
   meta_pixel_name?: string;
   selldo_api_key?: string;
   selldo_last_synced_at?: any; // Firestore Timestamp

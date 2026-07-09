@@ -44,9 +44,11 @@ export function statusMatchesTag(status: string, tag: AudienceTag): boolean {
   return tag === 'Positive Stage' ? POSITIVE_STATUSES.has(s) : NEGATIVE_STATUSES.has(s);
 }
 
-export function getEIEventName(status: string): string | null {
+export function getEIEventName(status: string, customEventMap?: Record<string, string>): string | null {
   if (!status) return null;
   const normalizedStatus = status.toLowerCase().trim();
+  const override = customEventMap?.[normalizedStatus];
+  if (override && override.trim()) return override.trim();
   return STATUS_MAP[normalizedStatus] || null;
 }
 

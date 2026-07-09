@@ -113,6 +113,14 @@ export async function sendGoogleEvent(
     return { success: false, error: warnMsg };
   }
 
+  const clientId = process.env.GOOGLE_CLIENT_ID;
+  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+  if (!clientId || !clientSecret) {
+    const warnMsg = 'Skipped Google event: server is missing GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET.';
+    console.error(`[Google Ads] ${warnMsg}`);
+    return { success: false, error: warnMsg };
+  }
+
   // Decrypt credentials
   const decryptedDevToken = decrypt(devToken);
   const decryptedRefreshToken = decrypt(encryptedRefreshToken);
@@ -135,8 +143,8 @@ export async function sendGoogleEvent(
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: new URLSearchParams({
-        client_id: process.env.GOOGLE_CLIENT_ID || 'mock-client-id',
-        client_secret: process.env.GOOGLE_CLIENT_SECRET || 'mock-client-secret',
+        client_id: clientId,
+        client_secret: clientSecret,
         refresh_token: decryptedRefreshToken,
         grant_type: 'refresh_token',
       }),
@@ -144,11 +152,13 @@ export async function sendGoogleEvent(
 
     if (!tokenResponse.ok) {
       const tokenErr = await tokenResponse.text();
-      console.warn(`[Google Ads] [MOCK FALLBACK] OAuth token exchange failed, running sandbox trigger.`, tokenErr);
-      
-      // Update lead anyway to verify E2E sandbox tracking
-      await updateGoogleLeadFired(workspace.id, lead.id, eventName);
-      return { success: true };
+      console.error(`[Google Ads] OAuth token exchange failed:`, tokenErr);
+      return {
+        success: false,
+        error: /invalid_grant/i.test(tokenErr)
+          ? 'Google refresh token is expired or revoked. Reconnect the account.'
+          : `OAuth token exchange failed: ${tokenErr.slice(0, 200)}`,
+      };
     }
 
     const tokenData = await tokenResponse.json();

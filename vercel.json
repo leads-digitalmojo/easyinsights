@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/selldo-sync",
       "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/cron/audience-sync",
+      "schedule": "0 3 * * *"
     }
   ]
 }

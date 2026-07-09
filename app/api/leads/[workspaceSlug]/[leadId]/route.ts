@@ -45,7 +45,7 @@ export async function PATCH(
       return NextResponse.json(lead, { status: 200 });
     }
 
-    const eventName = getEIEventName(status);
+    const eventName = getEIEventName(status, workspace.custom_event_map);
     if (!eventName) {
       return NextResponse.json(
         { error: `Invalid status '${status}'. Not mapped to any EasyInsights event.` },
@@ -55,7 +55,7 @@ export async function PATCH(
 
     // Fire the events first so the status_history entry can record the real
     // per-platform outcome (used by the Conversions activity log).
-    const fullUpdatedLead = { ...lead, lead_status: status, meta_event_fired: eventName, google_event_fired: eventName };
+    const fullUpdatedLead = { ...lead, lead_status: status };
 
     const [metaResult, googleResult] = await Promise.all([
       sendMetaEvent(workspace, fullUpdatedLead, eventName),
@@ -77,8 +77,8 @@ export async function PATCH(
     const updatedData: Record<string, any> = {
       lead_status: status,
       status_history: updatedHistory,
-      meta_event_fired: eventName,
-      google_event_fired: eventName,
+      meta_event_fired: metaResult.success ? eventName : (lead.meta_event_fired || ''),
+      google_event_fired: googleResult.success ? eventName : (lead.google_event_fired || ''),
       last_fired_at: new Date(),
       updated_at: new Date(),
     };
